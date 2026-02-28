@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Journal {
+  id        Int      @id @default(autoincrement())
+  text      String
+  mood      String
+  emojis    String[]
+  summary   String
+  source    String   @default("manual")
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id               Int              @id @default(autoincrement())
+  fullName         String
+  email            String           @unique
+  course           String
+  yearOfStudy      String
+  collegeName      String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  subjects         Subject[]
+  timetableEntries TimetableEntry[]
+  trustedContacts  TrustedContact[]
+  focusSessions    FocusSession[]
+  relaxSessions    RelaxSession[]
+  relaxStats       RelaxStat?
+  relaxReflections RelaxReflection[]
+}
+
+model Subject {
+  id          Int               @id @default(autoincrement())
+  name        String
+  userId      Int
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  
+  chapters    SyllabusChapter[]
+  assignments Assignment[]
+}
+
+model SyllabusChapter {
+  id        Int      @id @default(autoincrement())
+  title     String
+  completed Boolean  @default(false)
+  subjectId Int
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+}
+
+model Assignment {
+  id        Int      @id @default(autoincrement())
+  title     String
+  dueDate   DateTime
+  completed Boolean  @default(false)
+  subjectId Int
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model TimetableEntry {
+  id          Int    @id @default(autoincrement())
+  dayOfWeek   String
+  subjectName String
+  startTime   String
+  endTime     String
+  userId      Int
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TrustedContact {
+  id           Int    @id @default(autoincrement())
+  name         String
+  phone        String
+  relationType String
+  userId       Int
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FocusSession {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  durationMinutes Int
+  date            DateTime @default(now())
+}
+
+model RelaxSession {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // 'mood', 'timer', 'sound', 'room'
+  activity  String?  // Optional specific activity name like 'Stressed', 'Binaural Beats'
+  duration  Int      // Duration in minutes
+  date      DateTime @default(now())
+}
+
+model RelaxStat {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalMinutes  Int      @default(0)
+  currentStreak Int      @default(0)
+  xp            Int      @default(0)
+  lastRelaxDate DateTime?
+}
+
+model RelaxReflection {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gratitude  String
+  reflection String
+  date       DateTime @default(now())
+}
